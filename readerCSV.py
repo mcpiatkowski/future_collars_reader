@@ -34,6 +34,7 @@ def update():
         else:
             print('Za mało argumentów! Błędna składnia zmiany nr ', index+1)
 
+
 def writer():
     if input() == 'y':
         with open(sys.argv[2], 'w') as output_csv:
