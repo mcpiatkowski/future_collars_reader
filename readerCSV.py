@@ -1,31 +1,37 @@
 import sys
 import csv
 import os
-
-my_csv =[]
 # sys.argv = [reader.py <src> <dst> <change1> <change2> ..]
+changes = sys.argv
+input_filename = sys.argv[1]
+output_filename = sys.argv[2]
 
-def open_file():
+
+def open_file(input_filename):
+    my_csv =[]
+    if not input_filename.endswith('.csv'):
+        print('Wskazany plik musi być z rozszerzeniem csv!')
+        return (False, my_csv)
     try:
-        with open(sys.argv[1]) as input_csv:
+        with open(input_filename) as input_csv:
             reader = csv.reader(input_csv)
             for row in reader:
                 my_csv.append(row)
-        return True
+        return (True, my_csv)
     except FileNotFoundError:
         print('Błąd! Brak pliku!\n')
-        print('Pliki znajdujące się w katalogu: ')
-        for i in range(len(os.listdir())):
-            print(os.listdir()[i])
-        return False
+        print('Zawartość katalogu: ')
+        for item in os.listdir():
+            print(item)
+        return (False, my_csv)
 
 
-def update():
-    if len(sys.argv)-3 == 0:
+def update(my_csv, changes):
+    if len(changes)- 3 == 0:
         print('Brak zmian!')
         return
-    for index in range(len(sys.argv)-3):
-        change = sys.argv[index+3].split(',')
+    for index in range(len(changes)-3):
+        change = changes[index+3].split(',')
         if len(change) == 3:
             try:
                 my_csv[int(change[0])][int(change[1])] = change[2]
@@ -33,32 +39,41 @@ def update():
                 print('Niepoprawny typ argumentów! Błąd składni zmiany nr ', index+1)
         else:
             print('Za mało argumentów! Błędna składnia zmiany nr ', index+1)
+    return my_csv
 
 
-def writer():
+def writer(my_csv, output_filename):
     if input() == 'y':
-        with open(sys.argv[2], 'w') as output_csv:
+        with open(output_filename, 'w') as output_csv:
             updated = csv.writer(output_csv)
-            for row in my_csv:
-                updated.writerow(row)
-            print('Plik zapisano jako: ', sys.argv[2])
+            updated.writerows(my_csv)
+            print('Plik zapisano jako: ', output_filename)
     else:
         print('Nie zapisano zmian!')
 
-def save_file():
-    if os.path.exists(sys.argv[2]):
+
+def save_file(my_csv, output_filename):
+    if os.path.exists(output_filename):
         print('Podany plik już istnieje. Nadpisać? y/n')
-        writer()
+        writer(my_csv, output_filename)
     else:
         print('Czy chces stworzyć nowy plik? y/n')
-        writer()
-            
+        writer(my_csv, output_filename)
+    
+    
+def print_updated(my_csv):
+    print('Czy chcesz wyświetlić zmieniony plik? y/n')
+    if input() == 'y':
+        for row in my_csv:
+            print(row)
 
-def main():
-    if open_file():
-        update()
-        save_file()
 
+def main(input_filename, output_filename, changes):
+    file_opened, file_content = open_file(input_filename)
+    if file_opened:
+        updated_csv = update(file_content, changes)
+        save_file(updated_csv, output_filename)
+        print_updated(file_content)
 
 if __name__ == '__main__':
-    main()
+    main(input_filename, output_filename, changes)
