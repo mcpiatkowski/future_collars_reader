@@ -2,7 +2,7 @@ import sys
 import csv
 import os
 # sys.argv = [reader.py <src> <dst> <change1> <change2> ..]
-changes = sys.argv
+changes = sys.argv[3:]
 input_filename = sys.argv[1]
 output_filename = sys.argv[2]
 
@@ -27,11 +27,11 @@ def open_file(input_filename):
 
 
 def update(my_csv, changes):
-    if len(changes)- 3 == 0:
+    if len(changes) == 0:
         print('Brak zmian!')
         return
-    for index in range(len(changes)-3):
-        change = changes[index+3].split(',')
+    for index in range(len(changes)):
+        change = changes[index].split(',')
         if len(change) == 3:
             try:
                 my_csv[int(change[0])][int(change[1])] = change[2]
