@@ -1,77 +1,85 @@
 from sys import argv
-import os
+import pathlib
 import csv
+import json
+import pickle
 
-ext = argv[1].split('.')[-1].lower()
-out_ext = argv[2].split('.')[-1].lower()
 file_path = argv[1]
-output_path = argv[2]
+output_file_path = argv[2]
 changes = argv[3:]
 
 
 class AbstractReader:
-    def __init__(self, ext, file_path, output_path):
-        self.ext = ext
-        self.file_path = file_path
-        self.output_path = output_path
+    def __init__(self):
         self.my_file = []
 
 
     def modify(self, changes):
         for change in changes:
             mod = change.split(',')
-            print(mod)
             self.my_file[int(mod[0])][int(mod[1])] = mod[2]
+        return self.my_file
 
-
-    def save_file(self):
-        if ext == 'csv':
-            pass
-        elif ext == 'json':
-            pass    
-        elif ext == 'pickle':
-            pass
 
 class CsvReader(AbstractReader):
-    def open_file(self):
-        with open(self.file_path) as fp:
+    def open_file(self, file_path):
+        with open(file_path) as fp:
             file_to_modify = csv.reader(fp)
             self.my_file = [row for row in file_to_modify]
+        return self.my_file
 
-    def save_file(self):
-        with open(self.output_path, 'w') as fp:
+
+    def save_file(self, modified_file, output_file_path):
+        with open(output_file_path, 'w') as fp:
             modified = csv.writer(fp)
-            modified.writerows(self.my_file)
+            modified.writerows(modified_file)
 
 
 class PickleReader(AbstractReader):
-    pass
+    def open_file(self, file_path):
+        with open(file_path, 'rb') as fp:
+            self.my_file = pickle.load(fp)
+
+
+    def save_file(self, modified_file, output_file_path):
+        with open(output_file_path, 'wb') as fp:
+            fp.write(pickle.dumps(modified_file))
+
 
 class JsonReader(AbstractReader):
-    def save_file(self):
-        with open(self.output_path, 'w') as fp:
-            fp.write(json.dumps(self.my_file))
+    def open_file(self, file_path):
+        with open(file_path) as fp:
+            self.my_file = json.load(fp)
 
 
-def check_extension_and_create_object(ext, file_path, output_path):
-    if ext == 'csv':
-        reader = CsvReader(ext, file_path, output_path)
-    elif ext == 'json':
-        reader = JsonReader(ext, file_path, output_path)
-    elif ext == 'pickle':
-        reader = PickleReader(ext, file_path, output_path)
+    def save_file(self, modified_file, output_file_path):
+        with open(output_file_path, 'w') as fp:
+            fp.write(json.dumps(modified_file))
+
+
+def check_extension(file_path):
+    p = pathlib.Path(file_path)
+    return p.suffix
+
+
+def create_reader(extension):
+    if extension == '.csv':
+        reader = CsvReader()
+    elif extension == '.json':
+        reader = JsonReader()
+    elif extension == '.pickle':
+        reader = PickleReader()
     return reader
 
-print('file_path: ', file_path)
-print('ext: ', ext)
-print('output_path: ', output_path)
-print('out_ext: ', out_ext)
 
 def main():
-    reader = check_extension_and_create_object(ext, file_path, output_path)
-    reader.open_file()
-    reader.modify(changes)
-    reader.save_file()
+    extension = check_extension(file_path)
+    reader = create_reader(extension)
+    reader.open_file(file_path)
+    modified_file = reader.modify(changes)
+    extension = check_extension(output_file_path)
+    reader = create_reader(extension)
+    reader.save_file(modified_file, output_file_path)
 
 
 if __name__ == '__main__':
