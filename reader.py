@@ -1,4 +1,5 @@
 from sys import argv
+import os
 import pathlib
 import csv
 import json
@@ -57,6 +58,20 @@ class JsonReader(AbstractReader):
             fp.write(json.dumps(modified_file))
 
 
+def check_if_exists(file_path):
+    try:
+        if os.path.exists(file_path):
+            return True
+        else:
+            raise FileNotFoundError
+    except FileNotFoundError:
+        print('Błąd! Brak pliku!\n')
+        print('Zawartość katalogu: ')
+        for item in os.listdir():
+            print(item)
+        return False
+
+
 def check_extension(file_path):
     p = pathlib.Path(file_path)
     return p.suffix
@@ -73,13 +88,15 @@ def create_reader(extension):
 
 
 def main():
-    extension = check_extension(file_path)
-    reader = create_reader(extension)
-    reader.open_file(file_path)
-    modified_file = reader.modify(changes)
-    extension = check_extension(output_file_path)
-    reader = create_reader(extension)
-    reader.save_file(modified_file, output_file_path)
+    file_exists = check_if_exists(file_path)
+    if file_exists:
+        extension = check_extension(file_path)
+        reader = create_reader(extension)
+        reader.open_file(file_path)
+        modified_file = reader.modify(changes)
+        extension = check_extension(output_file_path)
+        reader = create_reader(extension)
+        reader.save_file(modified_file, output_file_path)
 
 
 if __name__ == '__main__':
